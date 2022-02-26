@@ -8,6 +8,9 @@ import { mobile } from "../components/Responsive";
 import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { publicRequest } from "../requesMethods";
+import { useDispatch } from "react-redux";
+import { addProduct } from "../redux/cartRedux";
+
 const Container = styled.div``;
 const Wrapper = styled.div`
   padding: 50px;
@@ -21,7 +24,6 @@ const InfoContainer = styled.div`
   flex: 1;
   padding: 0px 50px;
   ${mobile({ padding: "10px" })}
-
 `;
 const Image = styled.img`
   width: 100%;
@@ -106,18 +108,17 @@ const Product = () => {
   const location = useLocation();
   const id = location.pathname.split("/")[2];
   const [product, setProduct] = useState({});
-  const [color, setColor]= useState("")
+  const [color, setColor] = useState("");
   const [size, setSize] = useState("");
-  const [quantity, setQuantity]= useState(1)
-
- const handleQuantity=(type)=>{
-if(type==="dec"){
-    quantity>1 && setQuantity(quantity-1)
-}else{
-    setQuantity(quantity+1)
-
-}
- }
+  const [quantity, setQuantity] = useState(1);
+  const dispatch = useDispatch();
+  const handleQuantity = (type) => {
+    if (type === "dec") {
+      quantity > 1 && setQuantity(quantity - 1);
+    } else {
+      setQuantity(quantity + 1);
+    }
+  };
   useEffect(() => {
     const getProduct = async () => {
       try {
@@ -128,6 +129,10 @@ if(type==="dec"){
     getProduct();
   }, [id]);
   console.log(product);
+
+  const handleCart = () => {
+    dispatch(addProduct({ ...product,quantity,color,size}))
+  };
   return (
     <Container>
       <Announce />
@@ -145,8 +150,12 @@ if(type==="dec"){
           <FilterContainer>
             <Filter>
               <FilterTitle>Color</FilterTitle>
-              {product.color?.map((item) =>( 
-                <FilterColor color={item} key={item} onClick={()=> setColor(item)} />
+              {product.color?.map((item) => (
+                <FilterColor
+                  color={item}
+                  key={item}
+                  onClick={() => setColor(item)}
+                />
               ))}
             </Filter>
 
@@ -161,11 +170,11 @@ if(type==="dec"){
           </FilterContainer>
           <AddContainer>
             <AmountContainer>
-              <Remove onClick={()=> handleQuantity("dec")} />
+              <Remove onClick={() => handleQuantity("dec")} />
               <Amount>{quantity} </Amount>
-              <Add onClick={()=> handleQuantity("inc")}  />
+              <Add onClick={() => handleQuantity("inc")} />
             </AmountContainer>
-            <Button>ADD TO CART</Button>
+            <Button onClick={handleCart}>ADD TO CART</Button>
           </AddContainer>
         </InfoContainer>
       </Wrapper>

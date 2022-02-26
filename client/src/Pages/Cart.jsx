@@ -1,10 +1,16 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Announce from "../components/Announce";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import styled from "styled-components";
 import { Add, Remove } from "@mui/icons-material";
 import {mobile} from "../components/Responsive"
+import { useSelector } from 'react-redux'
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import StripeCheckout from "react-stripe-checkout";
+
+
 const Container = styled.div``;
 const Wrapper = styled.div`
   padding: 20px;
@@ -150,6 +156,38 @@ transition: 0.3s ease;
 `
 
 const Cart = () => {
+
+  const cart=useSelector((state)=>state.cart)
+console.log(cart)
+
+const [stripeToken, setStripeToken] = useState(null);
+const navigate=useNavigate()
+const onToken = (token) => {
+  console.log("tokenımız", token)
+  setStripeToken(token);
+};
+useEffect(() => {
+  const payRequest = async () => {
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/checkout/",
+        {
+          tokenId: stripeToken.id,
+          amount: cart.total*100,
+        }
+      );
+      console.log("this is res.data", res.data);
+      navigate("/success", {state:res.data})
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  stripeToken && payRequest();
+}, [stripeToken]);
+const KEY =
+  "pk_test_51KAxArE2cA6gXAOTA69DOqiH3JHqy7m6AQUqyyhYJj9vvUcbY7r5BCpsfme7AIHzCjfc83KmDcLpYMM6vQVYrIZZ00AsNVQ2qi";
+
+
   return (
     <div>
       <Container>
@@ -167,63 +205,44 @@ const Cart = () => {
           </Top>
           <Bottom>
             <Info>
-              <Product>
+              {cart.products.map(product=>(
+
+                <Product>
                 <ProductDetail>
-                  <Image src="https://www.prada.com/content/dam/pradanux_products/U/UCS/UCS319/1YOTF010O/UCS319_1YOT_F010O_S_182_SLF.png" />
+                  <Image src={product.img} />
                   <Details>
                     <ProductName>
-                      <b>Product: </b> PRADA SHIRT
+                      <b>Product: </b> {product.title}
                     </ProductName>
                     <ProductId>
-                      <b>ID: </b> 23552342342
+                      <b>ID: </b> {product._id}
                     </ProductId>
-                    <ProductColor color="#fa8102" />
+                    <ProductColor color={product.color} />
                     <ProductSize>
-                      <b>Size: </b> S
+                      <b>Size: </b> {product.size}
                     </ProductSize>
                   </Details>
                 </ProductDetail>
                 <PriceDetail>
                   <ProductAmountContainer>
                     <Add />
-                    <ProductAmount> 2</ProductAmount>
+                    <ProductAmount> {product.quantity}</ProductAmount>
                     <Remove />
                   </ProductAmountContainer>
-                  <ProductPrice>$ 45</ProductPrice>
+                  <ProductPrice>$ {product.price*product.quantity} </ProductPrice>
                 </PriceDetail>
               </Product>
-              <Hr />
-              <Product>
-                <ProductDetail>
-                  <Image src="https://d3o2e4jr3mxnm3.cloudfront.net/Mens-Jake-Guitar-Vintage-Crusher-Tee_68382_1_lg.png " />
-                  <Details>
-                    <ProductName>
-                      <b>Product: </b> DEAN SHIRT
-                    </ProductName>
-                    <ProductId>
-                      <b>ID: </b> 44552342342
-                    </ProductId>
-                    <ProductColor color="#fff5ee" />
-                    <ProductSize>
-                      <b>Size: </b> M
-                    </ProductSize>
-                  </Details>
-                </ProductDetail>
-                <PriceDetail>
-                  <ProductAmountContainer>
-                    <Add />
-                    <ProductAmount> 2</ProductAmount>
-                    <Remove />
-                  </ProductAmountContainer>
-                  <ProductPrice>$ 45</ProductPrice>
-                </PriceDetail>
-              </Product>
+              
+              ))
+            }
+            <Hr />
+             
             </Info>
             <Summary>
               <SummaryTitle>ORDER SUMMARY</SummaryTitle>
               <SummaryItem>
                 <SummaryItemText>Subtotal</SummaryItemText>
-                <SummaryItemPrice>$ 80</SummaryItemPrice>
+                <SummaryItemPrice>$ {cart.total}</SummaryItemPrice>
               </SummaryItem>
               <SummaryItem>
                 <SummaryItemText>Estimated Shipping</SummaryItemText>
@@ -235,9 +254,23 @@ const Cart = () => {
               </SummaryItem>
               <SummaryItem type="total">
                 <SummaryItemText >Total</SummaryItemText>
-                <SummaryItemPrice>$ 85</SummaryItemPrice>
+                <SummaryItemPrice>$ {cart.total+ 5}</SummaryItemPrice>
               </SummaryItem>
-              <SummaryButton>CHECKOUT NOW</SummaryButton>
+              {stripeToken? <span>Order processing</span>: 
+      <StripeCheckout
+      name="Comma co"
+      description="Bid data stuff"
+      image="https://avatars.githubusercontent.com/u/14985020?s=200&v=4"
+      shippingAddress
+      billingAddress={false}
+      amount={2000}
+      token={onToken}
+      stripeKey={KEY}
+      >
+        <SummaryButton>CHECKOUT NOW</SummaryButton>
+      </StripeCheckout>
+      }
+            
             </Summary>
           </Bottom>
         </Wrapper>

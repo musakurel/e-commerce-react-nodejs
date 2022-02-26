@@ -1,9 +1,10 @@
 import React from "react";
 import styled from "styled-components";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
-
+import {useDispatch} from "react-redux"
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import { Link } from "react-router-dom";
+import { addProduct } from "../redux/cartRedux";
 
 const Container = styled.div`
   margin: 3px;
@@ -70,24 +71,28 @@ const Image = styled.img`
 `;
 
 const ProductItem = ({ item }) => {
+const dispatch=useDispatch()
+  const handleCart=()=>{
+dispatch(addProduct({...item, quantity:1, size:item.size[0],color:item.color[0]}))
+  }
   return (
     <Container>
-      <Link to={`/product/${item._id}`}>
         <Circle />
         <Image src={item.img} />
         <Info>
           <Icon>
-            <ShoppingCartOutlinedIcon />
+            <ShoppingCartOutlinedIcon onClick={handleCart} />
           </Icon>
+      <Link to={`/product/${item._id}`}>
           <Icon>
             <SearchRoundedIcon />
           </Icon>
+      </Link>
 
           <Icon>
             <p>${item.price} </p>
           </Icon>
         </Info>
-      </Link>
     </Container>
   );
 };
